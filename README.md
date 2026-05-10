@@ -3,13 +3,13 @@
 [![Godot](https://img.shields.io/badge/Godot-4.6-478cbf?logo=godot-engine&logoColor=white)](https://godotengine.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-一个用于 **Godot 4.6** 俯视角 2D 肉鸽 (roguelike) 射击游戏的开发模板 / Workbuddy Skill。提供完整的游戏架构设计、核心系统实现指南和编码规范。
+一个用于 **Godot 4.6** 俯视角 2D 肉鸽 (roguelike) 射击游戏的开发模板 / Skill。提供完整的游戏架构设计、核心系统实现指南和编码规范。
 
 ---
 
 ## 这是什么？
 
-这是一个 **Workbuddy Skill**（`SKILL.md`），当你使用支持 Workbuddy 的 Claude Code 环境时，可以通过斜杠命令加载它，快速获得一个肉鸽射击游戏从零到完整的开发指导。
+这是一个 **Skill**（`SKILL.md`），当你使用Claude Code 环境时，可以通过斜杠命令加载它，快速获得一个肉鸽射击游戏从零到完整的开发指导。
 
 技能内容涵盖了游戏的整体架构、每个子系统的设计思路、代码模板，以及推荐的开发路线。
 
@@ -27,9 +27,9 @@
 
 ## 快速开始
 
-### 方式一：作为 Workbuddy Skill 使用
+### 方式一：作为Skill 使用
 
-1. 将 `roguelike-shooter` 文件夹放入你的 Workbuddy skills 目录
+1. 将 `roguelike-shooter` 文件夹放入你的skills 目录
 2. 在 Claude Code 中输入 `/roguelike-shooter` 加载技能
 3. 按技能指导逐步开发
 
