@@ -1,0 +1,220 @@
+name: roguelike-shooter
+description: "Godot 4.6 肉鸽射击游戏开发。俯视角 2D 射击 + 房间探索 + 强化升级 + 永久死亡。遵循 F:\CLAUDE.md 规范。"
+model: opus
+prompt: |
+  You are developing a roguelike shooter game using Godot 4.6.
+  Follow the coding standards defined in `F:\CLAUDE.md`.
+
+  ## Core Architecture
+
+  ### Scene Tree (Game.tscn root: Node)
+  - Player (CharacterBody2D)
+  - Camera2D (smoothing_enabled=true, smoothing_speed=5.0)
+  - RoomManager (room generation & management)
+  - HUD (HP, gold, weapon info)
+  - GameUI (pause, upgrade selection overlay)
+  - Background (decoration layer)
+
+  ### TileMap Collision Convention
+  - Layer 0: Floor (walkable)
+  - Layer 1: Walls/obstacles (collision)
+  - Layer 2: Decoration (no collision)
+
+  ### Room Generation Flow
+  1. _ready() → spawn start room
+  2. Player enters door area → load adjacent room
+  3. Room types: start (no enemies), combat (enemy waves), treasure (rewards), boss
+  4. Only load current and adjacent rooms
+
+  ### Room Generation Algorithm
+  1. Determine room count (3-5 combat + boss + optional shop)
+  2. Random walk to generate room topology graph
+  3. Connect rooms with corridors
+  4. Mark start/boss rooms
+  5. Only load current and adjacent rooms
+
+  ## Player System
+
+  ```gdscript
+  extends CharacterBody2D
+  class_name Player
+
+  @export var move_speed: float = 120.0
+  @export var max_hp: int = 6
+  @export var bullet_speed: float = 320.0
+  @export var weapon: Resource  # WeaponResource
+  @export var fire_rate: float = 0.2
+  @export var pickup_range: float = 30.0
+
+  var hp: int: set = _set_hp
+  var current_room: Room
+  var _is_rolling := false
+  var _invul_timer := 0.0
+  ```
+
+  ### Invincibility Frames
+  ```gdscript
+  func take_damage(amount: int) -> void:
+      if _invul_timer > 0.0:
+          return
+      hp -= amount
+      _invul_timer = 0.5
+      _flash_effect()
+      if hp <= 0:
+          _die()
+  ```
+
+  ## Weapon System (Resource-driven)
+
+  ```gdscript
+  enum WeaponType { SINGLE, BURST, SPREAD, SHOTGUN, LASER, BOOMERANG }
+  enum ElementalType { NONE, FIRE, ICE, POISON, LIGHTNING }
+
+  extends Resource
+  class_name WeaponResource
+
+  @export var weapon_name: String
+  @export var damage: int = 1
+  @export var fire_rate: float = 0.2
+  @export var bullet_scene: PackedScene
+  @export var bullet_count: int = 1
+  @export var spread_angle: float = 0.0
+  @export var pierce_count: int = 0
+  @export var knockback: float = 0.0
+  @export var elemental: int = 0
+  ```
+
+  ## Enemy System
+
+  ```gdscript
+  enum EnemyType { CHASER, SHOOTER, BOMBER, DASHER, BOSS }
+
+  extends CharacterBody2D
+  class_name Enemy
+
+  @export var speed: float = 50.0
+  @export var hp: int = 3
+  @export var damage: int = 1
+  @export var exp_value: int = 1
+  @export var enemy_type: int = 0
+
+  var _target: Player
+  var _stun_timer := 0.0
+  ```
+
+  **Enemy behaviors:**
+  - CHASER: Track player, melee attack
+  - SHOOTER: Keep distance, ranged attack
+  - BOMBER: Rush player, self-destruct
+  - DASHER: Intermittent charge
+  - BOSS: Multi-phase, multiple attack patterns
+
+  ## Upgrade System (three-choose-one after clearing rooms)
+
+  ```gdscript
+  enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
+
+  extends Resource
+  class_name UpgradeResource
+
+  @export var upgrade_name: String
+  @export var description: String
+  @export var icon: Texture2D
+  @export var rarity: int = 0
+  @export var modifiers: Array[Dictionary]
+  # modifiers = [
+  #   {stat="move_speed", value=0.15, op=1},
+  #   {stat="max_hp", value=2, op=0}
+  # ]
+  # op: 0=additive, 1=multiplicative, 2=override
+  ```
+
+  ## Economy & Drops
+  - Kill enemy → gold/exp
+  - Gold → shop (weapons/heals)
+  - Normal enemy: 30% gold drop
+  - Elite: 100% gold + chance of item
+  - Boss: key + high-quality weapon
+
+  ## Autoloads
+
+  ```gdscript
+  extends Node
+  class_name GameState
+
+  var character_stats: Dictionary
+  var unlocked_items: Array[String]
+  var total_runs: int
+  var best_wave: int
+  var total_kills: int
+  ```
+
+  ```gdscript
+  extends Resource
+  class_name RunData
+
+  var current_hp: int
+  var max_hp: int
+  var gold: int
+  var keys: int
+  var upgrades: Array
+  var current_weapon: Resource
+  var cleared_rooms: Array[int]
+  var enemies_killed: int
+  var elapsed_time: float
+  ```
+
+  ## Project Structure
+  ```
+  roguelike-shooter/
+  ├── scene/
+  │   ├── Player/
+  │   ├── Enemy/
+  │   ├── Weapon/
+  │   ├── Room/
+  │   ├── UI/
+  │   └── Menu/
+  ├── resources/
+  │   ├── weapons/
+  │   ├── upgrades/
+  │   └── tilesets/
+  ├── scripts/
+  │   ├── auto_load/
+  │   └── utils/
+  ├── art/
+  ├── sounds/
+  ├── project.godot
+  └── export_presets.cfg
+  ```
+
+  ## Camera
+  - Camera2D: smoothing_enabled=true, smoothing_speed=5.0
+  - Screen shake with tween
+
+  ## Pickup Magnet Effect
+  - Area2D pickup with magnetic attraction when player is within range
+
+  ## Damage Numbers
+  - Floating Label with tween (white=normal, yellow=crit)
+
+  ## Development Phases
+
+  ### Phase 1: Foundation
+  - Project init, player movement/shooting/dodge, basic enemies, TileMap room generation, room switching
+
+  ### Phase 2: Combat
+  - Multiple enemy types, weapon system (spread/pierce/elemental), collision damage + i-frames + screen shake, drops, wave spawning
+
+  ### Phase 3: Roguelike Loop
+  - Upgrade three-choose-one UI, economy + shop, boss fight, permadeath + results screen, global unlocks
+
+  ### Phase 4: Polish
+  - Sound management, particles, balance tuning, multiple characters, camera optimization
+
+  ## Coding Standards
+  Follow F:\CLAUDE.md conventions:
+  - Mandatory type annotations
+  - `_` prefix for private variables
+  - `@export` first, `@onready` node references
+  - Signal connections via code `connect()`
+  - Scenes via `preload()`
